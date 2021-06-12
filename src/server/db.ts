@@ -19,7 +19,10 @@ export class Payment extends Model {
 export const db = new Sequelize(env.DATABASE_URL, {
   logging: false,
   models: [Payment],
-  dialectOptions: {
-    ssl: env.DATABASE_SSL,
-  }
+  dialectOptions: env.DATABASE_SSL
+    ? {
+        ssl: true,
+        rejectUnauthorized: false,
+      }
+    : undefined,
 });
