@@ -4,6 +4,7 @@ dotenv.config();
 const env = {
   PORT: process.env.PORT || "3000",
   DATABASE_URL: process.env.DATABASE_URL as string,
+  DATABASE_SSL: !!process.env.DATABASE_SSL,
 
   LND_1_GRPC_URL: process.env.LND_1_GRPC_URL as string,
   LND_1_MACAROON: process.env.LND_1_MACAROON as string,
