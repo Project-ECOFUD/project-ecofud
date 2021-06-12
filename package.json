@@ -10,7 +10,7 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc",
     "build:client": "webpack --mode production",
-    "heroku-postbuild": "yarn build",
+    "heroku-postbuild": "yarn build:server",
     "start": "node build/index.js"
   },
   "dependencies": {

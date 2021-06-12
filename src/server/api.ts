@@ -1,10 +1,9 @@
 import { LnRpc } from "@radar/lnrpc";
 import express from "express";
-import expressWs, { Application as WSApplication } from "express-ws";
+import expressWs from "express-ws";
 import env from "./env";
-import { Payment, db } from "./db";
+import { Payment } from "./db";
 import sequelize from "sequelize";
-import { send } from "process";
 
 const expressApp = express();
 const wsApp = expressWs(expressApp);
