@@ -21,8 +21,10 @@ export const db = new Sequelize(env.DATABASE_URL, {
   models: [Payment],
   dialectOptions: env.DATABASE_SSL
     ? {
-        ssl: true,
-        rejectUnauthorized: false,
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
       }
     : undefined,
 });
