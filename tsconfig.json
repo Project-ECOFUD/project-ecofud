@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "lib": ["ESNext"],
+    "outDir": "build",
+    "strict": true,
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "paths": {
+      "*": ["types/*", "src/*", "node_modules/*"]
+    }
+  },
+  "include": ["./src/server/**/*", "./types/**/*"]
+}
