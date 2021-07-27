@@ -1,8 +1,18 @@
+import fetch from "node-fetch";
 import { db } from "./db";
 import { initializeLnds, sendBackAndForthForever } from "./lnd";
 import { initializeApi } from "./api";
 
 async function start() {
+  try {
+    console.info("Fetching external IP...");
+    const res = await fetch("https://api.ipify.org");
+    const ip = await res.text();
+    console.info(`IP address is ${ip}!`);
+  } catch(err) {
+    console.error('Failed to fetch IP address!', err);
+  }
+
   console.info("Initializing database...");
   await db.sync({ force: false });
   console.info("Database initialized!");
