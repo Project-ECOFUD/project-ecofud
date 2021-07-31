@@ -151,7 +151,7 @@ export class LndHttpClient {
             status: res.status,
           } as T.LndAPIResponseError;
         }
-        console.log("errBody", errBody);
+        console.info("errBody", errBody);
         throw errBody as T.LndAPIResponseError;
       }
       const json = await res.json();

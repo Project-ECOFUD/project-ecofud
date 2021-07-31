@@ -17,9 +17,13 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
     try {
       const lnd1Info = await lnd1.getInfo();
       const lnd2Info = await lnd2.getInfo();
-      const channel = (await lnd1.getChannels({ peer: pubkeyHexToUrlEncodedBase64(lnd2Info.identity_pubkey) })).channels[0];
+      const channel = (
+        await lnd1.getChannels({
+          peer: pubkeyHexToUrlEncodedBase64(lnd2Info.identity_pubkey),
+        })
+      ).channels[0];
       res.json({ lnd1Info, lnd2Info, channel });
-    } catch(err) {
+    } catch (err) {
       next(err);
     }
   });
@@ -28,17 +32,17 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   app.get("/payments", (_, res, next) => {
     getPaymentsInfo().then(res.json).catch(next);
   });
-  
+
   // Socket for getting regular updates about transaction info
-  app.ws("/payments", ws => {
-    ws.on('open', () => {
-      console.info('Payments socket opened');
+  app.ws("/payments", (ws) => {
+    ws.on("open", () => {
+      console.info("Payments socket opened");
       // Send once immediately, let the interval do all subsequent updating
-      getPaymentsInfo().then(pi => ws.send(JSON.stringify(pi)));
+      getPaymentsInfo().then((pi) => ws.send(JSON.stringify(pi)));
     });
-    ws.on('close', () => {
-      console.info('Payments socket closed');
-    })
+    ws.on("close", () => {
+      console.info("Payments socket closed");
+    });
   });
 
   // Send an update to all socket listeners whenever the cache expires
@@ -46,11 +50,13 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
     const { clients } = wsApp.getWss();
     if (clients.size > 0) {
       const piJson = JSON.stringify(await getPaymentsInfo());
-      console.log(`Sending update to ${clients.size} sockets with payment info ${piJson}`);
-      wsApp.getWss().clients.forEach(client => client.send(piJson));
+      console.debug(
+        `Sending update to ${clients.size} sockets with payment info ${piJson}`,
+      );
+      wsApp.getWss().clients.forEach((client) => client.send(piJson));
     }
     setTimeout(sendPaymentsUpdate, CACHED_TX_INTERVAL + 1);
-  }
+  };
   sendPaymentsUpdate();
 
   return new Promise((resolve, reject) => {
@@ -58,7 +64,7 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
       app.listen(env.PORT, () => {
         resolve(app);
       });
-    } catch(err) {
+    } catch (err) {
       reject(err);
     }
   });
@@ -87,17 +93,15 @@ async function getPaymentsInfo() {
   const txAmountPromise = Payment.findAll({
     attributes: [[sequelize.fn("sum", sequelize.col("amount")), "amount"]],
   });
-  return Promise.all([txCountPromise, txAmountPromise]).then(
-    ([count, amount]) => {
-      cachedPaymentsInfo = {
-        count: count,
-        totalAmount: amount.reduce((prev, amt) => prev + amt.amount, 0),
-        cachedAt: Date.now(),
-      };
-      return {
-        count: cachedPaymentsInfo.count,
-        amount: cachedPaymentsInfo.totalAmount,
-      };
-    }
-  );
+  return Promise.all([txCountPromise, txAmountPromise]).then(([count, amount]) => {
+    cachedPaymentsInfo = {
+      count: count,
+      totalAmount: amount.reduce((prev, amt) => prev + amt.amount, 0),
+      cachedAt: Date.now(),
+    };
+    return {
+      count: cachedPaymentsInfo.count,
+      amount: cachedPaymentsInfo.totalAmount,
+    };
+  });
 }

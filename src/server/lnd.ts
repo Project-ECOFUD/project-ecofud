@@ -17,8 +17,6 @@ function decodeCert(cert: string) {
 export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   // Grab the channel we'll use for sending, throw if we can't find it
   const lnd2Pubkey = (await lnd2.getInfo()).identity_pubkey;
-  console.log({ lnd2Pubkey });
-  console.log(pubkeyHexToUrlEncodedBase64(lnd2Pubkey));
   const channel = (
     await lnd1.getChannels({ peer: pubkeyHexToUrlEncodedBase64(lnd2Pubkey) })
   ).channels[0];
@@ -56,11 +54,6 @@ export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttp
     performance.mark("invoice");
 
     // Save invoice in db before it's paid
-    console.log({
-      amount,
-      paymentRequest: invoice.payment_request,
-      rHash: rHashBufferToStr(invoice.r_hash),
-    });
     const payment = await Payment.create({
       amount,
       paymentRequest: invoice.payment_request,
