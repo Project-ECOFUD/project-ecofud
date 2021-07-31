@@ -1,20 +1,11 @@
-import { createLnRpc, LnRpc } from "@radar/lnrpc";
 import { performance, PerformanceObserver } from "perf_hooks";
 import { Payment } from "./db";
 import env from "./env";
+import { LndHttpClient } from "./lndhttp";
 
 export async function initializeLnds() {
-  const lnd1 = await createLnRpc({
-    server: env.LND_1_GRPC_URL,
-    macaroon: env.LND_1_MACAROON,
-    cert: decodeCert(env.LND_1_TLS_CERT),
-  });
-
-  const lnd2 = await createLnRpc({
-    server: env.LND_2_GRPC_URL,
-    macaroon: env.LND_2_MACAROON,
-    cert: decodeCert(env.LND_2_TLS_CERT),
-  });
+  const lnd1 = new LndHttpClient(env.LND_1_REST_URL, env.LND_1_MACAROON);
+  const lnd2 = new LndHttpClient(env.LND_2_REST_URL, env.LND_2_MACAROON);
 
   return { lnd1, lnd2 };
 }
@@ -23,11 +14,14 @@ function decodeCert(cert: string) {
   return Buffer.from(cert, "base64").toString("ascii");
 }
 
-export async function sendBackAndForthForever(lnd1: LnRpc, lnd2: LnRpc) {
+export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   // Grab the channel we'll use for sending, throw if we can't find it
-  const lnd2Pubkey = (await lnd2.getInfo()).identityPubkey;
-  const channel = (await lnd1.listChannels({ peer: Buffer.from(lnd2Pubkey, "hex") }))
-    .channels[0];
+  const lnd2Pubkey = (await lnd2.getInfo()).identity_pubkey;
+  console.log({ lnd2Pubkey });
+  console.log(pubkeyHexToUrlEncodedBase64(lnd2Pubkey));
+  const channel = (
+    await lnd1.getChannels({ peer: pubkeyHexToUrlEncodedBase64(lnd2Pubkey) })
+  ).channels[0];
 
   if (!channel) {
     throw new Error(
@@ -40,7 +34,7 @@ export async function sendBackAndForthForever(lnd1: LnRpc, lnd2: LnRpc) {
     );
   }
 
-  const directionIdentifier = (sender: LnRpc) => {
+  const directionIdentifier = (sender: LndHttpClient) => {
     return sender === lnd1 ? "lnd1 -> lnd2" : "lnd2 -> lnd1";
   };
 
@@ -52,31 +46,33 @@ export async function sendBackAndForthForever(lnd1: LnRpc, lnd2: LnRpc) {
   obs.observe({ entryTypes: ["measure"], buffered: true });
 
   // Define the recursive send function, once it starts the party don't stop
-  const send = async (sender: LnRpc, receiver: LnRpc) => {
+  const send = async (sender: LndHttpClient, receiver: LndHttpClient) => {
     performance.mark("start");
     // Generate an invoice
     const amount = 10000;
-    const invoice = await receiver.addInvoice({
+    const invoice = await receiver.createInvoice({
       value: amount.toString(), // 0.001btc
     });
     performance.mark("invoice");
 
     // Save invoice in db before it's paid
+    console.log({
+      amount,
+      paymentRequest: invoice.payment_request,
+      rHash: rHashBufferToStr(invoice.r_hash),
+    });
     const payment = await Payment.create({
       amount,
-      paymentRequest: invoice.paymentRequest,
-      rHash: rHashBufferToStr(invoice.rHash),
+      paymentRequest: invoice.payment_request,
+      rHash: rHashBufferToStr(invoice.r_hash),
     });
     performance.mark("db-payment");
 
     // Pay invoice
-    const receipt = await sender.sendPaymentSync({
-      paymentRequest: invoice.paymentRequest,
-      outgoingChanId: channel.chanId,
+    await sender.sendPayment({
+      payment_request: invoice.payment_request,
+      outgoing_chan_id: channel.chan_id,
     });
-    if (receipt.paymentError) {
-      throw new Error(`LND Payment Error: ${receipt.paymentError}`);
-    }
     performance.mark("payment");
 
     // Otherwise, save the paid at timestamp
@@ -105,7 +101,7 @@ export async function sendBackAndForthForever(lnd1: LnRpc, lnd2: LnRpc) {
   // Kick off the sending cycle, with the larger balance between the 2 sending first
   // Don't try / catch, if the initial one fails then let the whole thing fail.
   for (let i = 0; i < env.PAYMENT_CONCURRENCY; i++) {
-    parseFloat(channel.localBalance || "0") > parseFloat(channel.remoteBalance || "0")
+    parseFloat(channel.local_balance || "0") > parseFloat(channel.remote_balance || "0")
       ? send(lnd1, lnd2)
       : send(lnd2, lnd1);
   }
@@ -114,4 +110,8 @@ export async function sendBackAndForthForever(lnd1: LnRpc, lnd2: LnRpc) {
 
 export function rHashBufferToStr(rHash: string | Buffer | Uint8Array): string {
   return Buffer.from(rHash as Uint8Array).toString("hex");
+}
+
+export function pubkeyHexToUrlEncodedBase64(pubkey: string) {
+  return encodeURI(Buffer.from(pubkey, "hex").toString("base64"));
 }

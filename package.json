@@ -20,6 +20,7 @@
     "express-ws": "^4.0.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.6.0",
+    "query-string": "^7.0.1",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^6.6.2",
     "sequelize-typescript": "^2.1.0",

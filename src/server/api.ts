@@ -1,22 +1,23 @@
-import { LnRpc } from "@radar/lnrpc";
 import express from "express";
 import expressWs from "express-ws";
 import env from "./env";
 import { Payment } from "./db";
 import sequelize from "sequelize";
+import { LndHttpClient } from "./lndhttp";
+import { pubkeyHexToUrlEncodedBase64 } from "./lnd";
 
 const expressApp = express();
 const wsApp = expressWs(expressApp);
 const app = wsApp.app;
 app.set("port", env.PORT);
 
-export function initializeApi(lnd1: LnRpc, lnd2: LnRpc) {
+export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   // Returns an array of the node's info
-  app.get("/info", async (req, res, next) => {
+  app.get("/info", async (_, res, next) => {
     try {
       const lnd1Info = await lnd1.getInfo();
       const lnd2Info = await lnd2.getInfo();
-      const channel = (await lnd1.listChannels({ peer: lnd2Info.identityPubkey })).channels[0];
+      const channel = (await lnd1.getChannels({ peer: pubkeyHexToUrlEncodedBase64(lnd2Info.identity_pubkey) })).channels[0];
       res.json({ lnd1Info, lnd2Info, channel });
     } catch(err) {
       next(err);
@@ -24,7 +25,7 @@ export function initializeApi(lnd1: LnRpc, lnd2: LnRpc) {
   });
 
   // Returns the number of transactions and total value in the db
-  app.get("/payments", (req, res, next) => {
+  app.get("/payments", (_, res, next) => {
     getPaymentsInfo().then(res.json).catch(next);
   });
   

@@ -9,8 +9,8 @@ async function start() {
     const res = await fetch("https://api.ipify.org");
     const ip = await res.text();
     console.info(`IP address is ${ip}!`);
-  } catch(err) {
-    console.error('Failed to fetch IP address!', err);
+  } catch (err) {
+    console.error("Failed to fetch IP address!", err);
   }
 
   console.info("Initializing database...");
