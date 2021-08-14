@@ -108,3 +108,20 @@ export function rHashBufferToStr(rHash: string | Buffer | Uint8Array): string {
 export function pubkeyHexToUrlEncodedBase64(pubkey: string) {
   return encodeURI(Buffer.from(pubkey, "hex").toString("base64"));
 }
+
+export async function deletePaymentHistory(lnd1: LndHttpClient, lnd2: LndHttpClient) {
+  console.log("Deleting LND 1's payment history...");
+  await lnd1.deletePaymentHistory();
+  console.log("LND 1 payment history deleted!");
+
+  console.log("Deleting LND 2's payment history...");
+  await lnd1.deletePaymentHistory();
+  console.log("LND 2 payment history deleted!");
+}
+
+export function deletePaymentHistoryForever(lnd1: LndHttpClient, lnd2: LndHttpClient) {
+  setTimeout(async () => {
+    await deletePaymentHistory(lnd1, lnd2);
+    deletePaymentHistoryForever(lnd1, lnd2);
+  }, 1000 * 60 * 5); // every 5 minutes
+}

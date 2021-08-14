@@ -1,6 +1,11 @@
 import fetch from "node-fetch";
 import { db } from "./db";
-import { initializeLnds, sendBackAndForthForever } from "./lnd";
+import {
+  initializeLnds,
+  sendBackAndForthForever,
+  deletePaymentHistoryForever,
+  deletePaymentHistory,
+} from "./lnd";
 import { initializeApi } from "./api";
 
 async function start() {
@@ -21,12 +26,19 @@ async function start() {
   const { lnd1, lnd2 } = await initializeLnds();
   console.info("LND connection initialized!");
 
+  console.info("Clearing initial LND payment history...");
+  await deletePaymentHistory(lnd1, lnd2);
+  console.info("Cleared initial LND payment history!");
+
   console.info("Initializing API...");
   await initializeApi(lnd1, lnd2);
   console.info("API Initialized!");
 
   console.info("Beginning infinite sends...");
   await sendBackAndForthForever(lnd1, lnd2);
+
+  console.info("Beginning periodic payment history deletions...");
+  deletePaymentHistoryForever(lnd1, lnd2);
 }
 
 start()

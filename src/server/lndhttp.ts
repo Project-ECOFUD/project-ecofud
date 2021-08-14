@@ -108,6 +108,10 @@ export class LndHttpClient {
     });
   };
 
+  deletePaymentHistory = () => {
+    return this.request<any, any>("DELETE", "/v1/payments");
+  };
+
   // Internal fetch function
   protected async request<R extends object, A extends object | undefined = undefined>(
     method: ApiMethod,
