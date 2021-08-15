@@ -29,8 +29,13 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   });
 
   // Returns the number of transactions and total value in the db
-  app.get("/payments", (_, res, next) => {
-    getPaymentsInfo().then(res.json).catch(next);
+  app.get("/payments", async (_, res, next) => {
+    try {
+      const pi = await getPaymentsInfo();
+      res.json(pi);
+    } catch (err) {
+      next(err);
+    }
   });
 
   // Socket for getting regular updates about transaction info
@@ -96,7 +101,10 @@ async function getPaymentsInfo() {
   return Promise.all([txCountPromise, txAmountPromise]).then(([count, amount]) => {
     cachedPaymentsInfo = {
       count: count,
-      totalAmount: amount.reduce((prev, amt) => prev + amt.amount, 0),
+      totalAmount: amount.reduce(
+        (prev, amt) => prev + parseInt(amt.amount as any, 10),
+        0,
+      ),
       cachedAt: Date.now(),
     };
     return {
