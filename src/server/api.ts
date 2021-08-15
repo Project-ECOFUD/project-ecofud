@@ -58,7 +58,15 @@ export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
       console.debug(
         `Sending update to ${clients.size} sockets with payment info ${piJson}`,
       );
-      wsApp.getWss().clients.forEach((client) => client.send(piJson));
+      wsApp.getWss().clients.forEach((client) => {
+        try {
+          if (client.readyState === 1) {
+            client.send(piJson);
+          }
+        } catch (err) {
+          console.error("Failed to send to socket", err);
+        }
+      });
     }
     setTimeout(sendPaymentsUpdate, CACHED_TX_INTERVAL + 1);
   };
