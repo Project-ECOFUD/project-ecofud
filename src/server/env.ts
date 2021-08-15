@@ -18,7 +18,7 @@ const env = {
 
   PAYMENT_AMOUNT: process.env.PAYMENT_AMOUNT
     ? parseInt(process.env.PAYMENT_AMOUNT, 10)
-    : 1000,
+    : 50,
   PAYMENT_CONCURRENCY: process.env.PAYMENT_CONCURRENCY
     ? parseInt(process.env.PAYMENT_CONCURRENCY, 10)
     : 10,

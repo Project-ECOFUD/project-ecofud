@@ -32,6 +32,8 @@ export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttp
     );
   }
 
+  console.log(`Using channel ${channel.chan_id} for sending!`);
+
   const directionIdentifier = (sender: LndHttpClient) => {
     return sender === lnd1 ? "lnd1 -> lnd2" : "lnd2 -> lnd1";
   };
@@ -47,7 +49,7 @@ export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttp
   const send = async (sender: LndHttpClient, receiver: LndHttpClient) => {
     performance.mark("start");
     // Generate an invoice
-    const amount = 10000;
+    const amount = env.PAYMENT_AMOUNT;
     const invoice = await receiver.createInvoice({
       value: amount.toString(), // 0.001btc
     });
@@ -79,9 +81,9 @@ export async function sendBackAndForthForever(lnd1: LndHttpClient, lnd2: LndHttp
     performance.mark("db-payment-update");
 
     // Send again in reverse order, retry on failures
-    const reverseSend = () => {
+    const reverseSend = async () => {
       try {
-        send(receiver, sender);
+        await send(receiver, sender);
       } catch (err) {
         console.error(`[${directionIdentifier(receiver)}] Failed to send:`, err);
         console.info("Re-trying failed send in 5 seconds...");
@@ -121,7 +123,11 @@ export async function deletePaymentHistory(lnd1: LndHttpClient, lnd2: LndHttpCli
 
 export function deletePaymentHistoryForever(lnd1: LndHttpClient, lnd2: LndHttpClient) {
   setTimeout(async () => {
-    await deletePaymentHistory(lnd1, lnd2);
+    try {
+      await deletePaymentHistory(lnd1, lnd2);
+    } catch (err) {
+      console.error("Failed to delete payment history:", err);
+    }
     deletePaymentHistoryForever(lnd1, lnd2);
   }, 1000 * 60 * 5); // every 5 minutes
 }

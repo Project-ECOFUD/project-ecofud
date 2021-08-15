@@ -4,13 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently -n server,client 'npm run dev:server' 'npm run dev:client'",
-    "dev:server": "nodemon",
-    "dev:client": "webpack --mode development --watch --config=./src/client/webpack.config.js",
-    "build": "npm run build:server && npm run build:client",
-    "build:server": "tsc",
-    "build:client": "webpack --mode production",
-    "heroku-postbuild": "yarn build:server",
+    "dev": "nodemon",
+    "build": "tsc",
+    "heroku-postbuild": "yarn build",
     "start": "node build/index.js"
   },
   "dependencies": {
