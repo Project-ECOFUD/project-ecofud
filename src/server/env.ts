@@ -16,6 +16,8 @@ const env = {
   LND_2_MACAROON: process.env.LND_2_MACAROON as string,
   LND_2_TLS_CERT: process.env.LND_2_TLS_CERT as string,
 
+  LND_USE_GRPC: process.env.LND_USE_GRPC ? JSON.parse(process.env.LND_USE_GRPC) : false,
+
   PAYMENT_AMOUNT: process.env.PAYMENT_AMOUNT
     ? parseInt(process.env.PAYMENT_AMOUNT, 10)
     : 50,
@@ -23,11 +25,5 @@ const env = {
     ? parseInt(process.env.PAYMENT_CONCURRENCY, 10)
     : 10,
 };
-
-Object.entries(env).forEach(([key, value]) => {
-  if (value === undefined || value === "" || value === NaN) {
-    throw new Error(`Missing or invalid environment variable ${key}: ${value}`);
-  }
-});
 
 export default env;

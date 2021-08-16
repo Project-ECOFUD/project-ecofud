@@ -3,7 +3,7 @@ import expressWs from "express-ws";
 import env from "./env";
 import { Payment } from "./db";
 import sequelize from "sequelize";
-import { LndHttpClient } from "./lndhttp";
+import { LndClient } from "./lnd";
 import { pubkeyHexToUrlEncodedBase64 } from "./lnd";
 
 const expressApp = express();
@@ -11,7 +11,7 @@ const wsApp = expressWs(expressApp);
 const app = wsApp.app;
 app.set("port", env.PORT);
 
-export function initializeApi(lnd1: LndHttpClient, lnd2: LndHttpClient) {
+export function initializeApi(lnd1: LndClient, lnd2: LndClient) {
   // Returns an array of the node's info
   app.get("/info", async (_, res, next) => {
     try {

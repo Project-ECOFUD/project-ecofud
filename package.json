@@ -10,7 +10,8 @@
     "start": "node build/index.js"
   },
   "dependencies": {
-    "@radar/lnrpc": "^0.11.1-beta.1",
+    "@grpc/grpc-js": "^1.3.7",
+    "@grpc/proto-loader": "^0.6.4",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
     "express-ws": "^4.0.0",
