@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
+    "build": "tsc && cp src/server/lightning.proto build/lightning.proto",
     "heroku-postbuild": "yarn build",
     "start": "node build/index.js"
   },
